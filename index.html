@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduSpace | مساحة التعليم</title>
+  <style>
+    :root {
+      --bg: #0d1020;
+      --surface: #171b30;
+      --surface2: #1e2340;
+      --primary: #9274ff;
+      --blue: #58a6ff;
+      --text: #f5f5ff;
+      --muted: #a0a5bd;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+    header {
+      padding: 22px 7%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #292e49;
+      background: var(--surface);
+    }
+    .logo { font-size: 25px; font-weight: bold; color: var(--primary); }
+    button, select {
+      background: var(--primary);
+      color: white;
+      border: 0;
+      padding: 11px 17px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    main { max-width: 1100px; margin: auto; padding: 45px 20px; }
+    .hero {
+      background: linear-gradient(135deg, #28204b, #182d4c);
+      padding: 45px 30px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+    }
+    .hero h1 { font-size: 38px; margin: 0 0 15px; }
+    .hero p { color: #d1d3e5; line-height: 1.8; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: var(--surface);
+      padding: 23px;
+      border-radius: 15px;
+      border: 1px solid #292e49;
+    }
+    .card h3 { color: var(--primary); }
+    .card p { color: var(--muted); line-height: 1.7; }
+    .welcome { margin-bottom: 25px; }
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+    }
+    @media(max-width:600px) {
+      .hero h1 { font-size: 29px; }
+      header { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">EduSpace ✦</div>
+    <select id="language" onchange="changeLanguage()">
+      <option value="ar">العربية</option>
+      <option value="en">English</option>
+    </select>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1 id="welcome">مرحباً بك في EduSpace 💜</h1>
+      <p id="intro">مساحتك التعليمية التي تجمع الدروس والواجبات والاختبارات والكتب والمذاكرة في مكان واحد.</p>
+      <button id="start" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">اكتشف الموقع</button>
+    </section>
+
+    <h2 id="featuresTitle" class="welcome">استكشف EduSpace</h2>
+    <section class="grid" id="features">
+      <div class="card"><h3 id="lessons">📚 الدروس</h3><p id="lessonsText">تابع دروسك وملخصاتك التعليمية.</p></div>
+      <div class="card"><h3 id="homework">📝 الواجبات</h3><p id="homeworkText">تابع واجباتك وتسليماتك.</p></div>
+      <div class="card"><h3 id="exams">📋 الاختبارات</h3><p id="examsText">استعد للاختبارات وتابع نتائجك.</p></div>
+      <div class="card"><h3 id="library">📖 المكتبة</h3><p id="libraryText">مكان للكتب والملفات التعليمية.</p></div>
+      <div class="card"><h3 id="timer">⏱️ مؤقت المذاكرة</h3><p id="timerText">نظّم وقت مذاكرتك وركز في أهدافك.</p></div>
+      <div class="card"><h3 id="rooms">👥 غرف المذاكرة</h3><p id="roomsText">ذاكر مع زملائك في مساحة مشتركة.</p></div>
+      <div class="card"><h3 id="assistant">🤖 EduAI</h3><p id="assistantText">مساعد تعليمي للإجابة عن أسئلتك.</p></div>
+      <div class="card"><h3 id="account">👤 الحسابات</h3><p id="accountText">مساحة مخصصة للطلاب والمعلمين والإدارة.</p></div>
+    </section>
+  </main>
+
+  <footer>EduSpace © 2026 — Learn, Grow, Achieve ✨</footer>
+
+  <script>
+    function changeLanguage() {
+      const en = document.getElementById("language").value === "en";
+      document.documentElement.lang = en ? "en" : "ar";
+      document.documentElement.dir = en ? "ltr" : "rtl";
+      const translations = {
+        welcome: ["مرحباً بك في EduSpace 💜", "Welcome to EduSpace 💜"],
+        intro: ["مساحتك التعليمية التي تجمع الدروس والواجبات والاختبارات والكتب والمذاكرة في مكان واحد.", "Your learning space for lessons, homework, exams, books and studying."],
+        start: ["اكتشف الموقع", "Explore the website"],
+        featuresTitle: ["استكشف EduSpace", "Explore EduSpace"],
+        lessons: ["📚 الدروس", "📚 Lessons"],
+        lessonsText: ["تابع دروسك وملخصاتك التعليمية.", "Explore lessons and study notes."],
+        homework: ["📝 الواجبات", "📝 Homework"],
+        homeworkText: ["تابع واجباتك وتسليماتك.", "Track your homework and submissions."],
+        exams: ["📋 الاختبارات", "📋 Exams"],
+        examsText: ["استعد للاختبارات وتابع نتائجك.", "Take exams and track your results."],
+        library: ["📖 المكتبة", "📖 Library"],
+        libraryText: ["مكان للكتب والملفات التعليمية.", "A place for books and learning files."],
+        timer: ["⏱️ مؤقت المذاكرة", "⏱️ Study Timer"],
+        timerText: ["نظّم وقت مذاكرتك وركز في أهدافك.", "Organize your study time and focus."],
+        rooms: ["👥 غرف المذاكرة", "👥 Study Rooms"],
+        roomsText: ["ذاكر مع زملائك في مساحة مشتركة.", "Study with classmates in shared rooms."],
+        assistant: ["🤖 EduAI", "🤖 EduAI"],
+        assistantText: ["مساعد تعليمي للإجابة عن أسئلتك.", "A learning assistant for your questions."],
+        account: ["👤 الحسابات", "👤 Accounts"],
+        accountText: ["مساحة مخصصة للطلاب والمعلمين والإدارة.", "Spaces for students, teachers and admins."]
+      };
+      for (const id in translations) {
+        document.getElementById(id).textContent = translations[id][en ? 1 : 0];
+      }
+    }
+  </script>
+</body>
+</html>
