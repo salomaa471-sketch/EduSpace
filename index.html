@@ -137,5 +137,31 @@
       }
     }
   </script>
+<script type="module">
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+
+    import { getFirestore }
+      from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+
+    import { getAuth }
+      from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBf_AY-MDmNLk8HX5ECwHT5OXG8GSLpbbc",
+      authDomain: "eduspace-1008a.firebaseapp.com",
+      projectId: "eduspace-1008a",
+      storageBucket: "eduspace-1008a.firebasestorage.app",
+      messagingSenderId: "396717409799",
+      appId: "1:396717409799:web:b970433310e914c33e4ca2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+
+    window.db = getFirestore(app);
+    window.auth = getAuth(app);
+
+    console.log("EduSpace Firebase Connected!");
+  </script>
 </body>
 </html>
