@@ -4,164 +4,526 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduSpace | مساحة التعليم</title>
-  <style>
-    :root {
-      --bg: #0d1020;
-      --surface: #171b30;
-      --surface2: #1e2340;
-      --primary: #9274ff;
-      --blue: #58a6ff;
-      --text: #f5f5ff;
-      --muted: #a0a5bd;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, sans-serif;
-    }
-    header {
-      padding: 22px 7%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #292e49;
-      background: var(--surface);
-    }
-    .logo { font-size: 25px; font-weight: bold; color: var(--primary); }
-    button, select {
-      background: var(--primary);
-      color: white;
-      border: 0;
-      padding: 11px 17px;
-      border-radius: 9px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    main { max-width: 1100px; margin: auto; padding: 45px 20px; }
-    .hero {
-      background: linear-gradient(135deg, #28204b, #182d4c);
-      padding: 45px 30px;
-      border-radius: 20px;
-      margin-bottom: 30px;
-    }
-    .hero h1 { font-size: 38px; margin: 0 0 15px; }
-    .hero p { color: #d1d3e5; line-height: 1.8; }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-    }
-    .card {
-      background: var(--surface);
-      padding: 23px;
-      border-radius: 15px;
-      border: 1px solid #292e49;
-    }
-    .card h3 { color: var(--primary); }
-    .card p { color: var(--muted); line-height: 1.7; }
-    .welcome { margin-bottom: 25px; }
-    footer {
-      text-align: center;
-      padding: 30px;
-      color: var(--muted);
-    }
-    @media(max-width:600px) {
-      .hero h1 { font-size: 29px; }
-      header { padding: 18px; }
-    }
-  </style>
+  <meta name="theme-color" content="#0d1020">
+  <meta name="description" content="EduSpace - Your Smart Learning Space">
+  <title>EduSpace | منصة التعليم الذكية</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body>
-  <header>
-    <div class="logo">EduSpace ✦</div>
-    <select id="language" onchange="changeLanguage()">
-      <option value="ar">العربية</option>
-      <option value="en">English</option>
-    </select>
-  </header>
 
-  <main>
-    <section class="hero">
-      <h1 id="welcome">مرحباً بك في EduSpace 💜</h1>
-      <p id="intro">مساحتك التعليمية التي تجمع الدروس والواجبات والاختبارات والكتب والمذاكرة في مكان واحد.</p>
-      <button id="start" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">اكتشف الموقع</button>
+<body>
+
+  <!-- LOADING SCREEN -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-logo">E</div>
+    <h2>EduSpace</h2>
+    <p>Preparing your learning space...</p>
+    <div class="loader"></div>
+  </div>
+
+  <!-- AUTHENTICATION -->
+  <main id="authScreen" class="auth-screen hidden">
+    <section class="auth-brand">
+      <div class="brand-logo">E</div>
+      <h1>EduSpace</h1>
+      <p>Your learning journey starts here.</p>
+      <div class="auth-decoration"></div>
     </section>
 
-    <h2 id="featuresTitle" class="welcome">استكشف EduSpace</h2>
-    <section class="grid" id="features">
-      <div class="card"><h3 id="lessons">📚 الدروس</h3><p id="lessonsText">تابع دروسك وملخصاتك التعليمية.</p></div>
-      <div class="card"><h3 id="homework">📝 الواجبات</h3><p id="homeworkText">تابع واجباتك وتسليماتك.</p></div>
-      <div class="card"><h3 id="exams">📋 الاختبارات</h3><p id="examsText">استعد للاختبارات وتابع نتائجك.</p></div>
-      <div class="card"><h3 id="library">📖 المكتبة</h3><p id="libraryText">مكان للكتب والملفات التعليمية.</p></div>
-      <div class="card"><h3 id="timer">⏱️ مؤقت المذاكرة</h3><p id="timerText">نظّم وقت مذاكرتك وركز في أهدافك.</p></div>
-      <div class="card"><h3 id="rooms">👥 غرف المذاكرة</h3><p id="roomsText">ذاكر مع زملائك في مساحة مشتركة.</p></div>
-      <div class="card"><h3 id="assistant">🤖 EduAI</h3><p id="assistantText">مساعد تعليمي للإجابة عن أسئلتك.</p></div>
-      <div class="card"><h3 id="account">👤 الحسابات</h3><p id="accountText">مساحة مخصصة للطلاب والمعلمين والإدارة.</p></div>
+    <section class="auth-container">
+      <div class="auth-card">
+
+        <div class="auth-heading">
+          <span class="eyebrow">WELCOME TO EDUSPACE</span>
+          <h2 id="authTitle">أهلًا بعودتك!</h2>
+          <p id="authSubtitle">سجّل دخولك للوصول إلى مساحتك التعليمية.</p>
+        </div>
+
+        <!-- LOGIN -->
+        <form id="loginForm">
+          <label for="loginEmail">البريد الإلكتروني</label>
+          <input id="loginEmail" type="email"
+            placeholder="example@email.com" autocomplete="email" required>
+
+          <label for="loginPassword">كلمة المرور</label>
+          <div class="password-field">
+            <input id="loginPassword" type="password"
+              placeholder="أدخل كلمة المرور" autocomplete="current-password" required>
+            <button type="button" class="password-toggle"
+              data-toggle-password="loginPassword">إظهار</button>
+          </div>
+
+          <div class="auth-options">
+            <label class="remember-option">
+              <input type="checkbox" id="rememberMe">
+              <span>تذكرني</span>
+            </label>
+            <button type="button" class="text-button" id="forgotPassword">
+              نسيت كلمة المرور؟
+            </button>
+          </div>
+
+          <button type="submit" class="primary-btn" id="loginBtn">
+            تسجيل الدخول
+          </button>
+
+          <p class="auth-switch">
+            ليس لديك حساب؟
+            <button type="button" class="text-button" id="showRegister">
+              إنشاء حساب جديد
+            </button>
+          </p>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="registerForm" class="hidden">
+          <label for="registerName">الاسم الكامل</label>
+          <input id="registerName" type="text"
+            placeholder="اكتب اسمك" autocomplete="name" required>
+
+          <label for="registerEmail">البريد الإلكتروني</label>
+          <input id="registerEmail" type="email"
+            placeholder="example@email.com" autocomplete="email" required>
+
+          <label for="registerPassword">كلمة المرور</label>
+          <div class="password-field">
+            <input id="registerPassword" type="password"
+              placeholder="6 أحرف على الأقل" minlength="6"
+              autocomplete="new-password" required>
+            <button type="button" class="password-toggle"
+              data-toggle-password="registerPassword">إظهار</button>
+          </div>
+
+          <label for="registerConfirm">تأكيد كلمة المرور</label>
+          <input id="registerConfirm" type="password"
+            placeholder="أعد كتابة كلمة المرور"
+            autocomplete="new-password" required>
+
+          <label for="registerGrade">الصف الدراسي</label>
+          <select id="registerGrade" required>
+            <option value="">اختر الصف</option>
+            <option value="7">الصف السابع</option>
+            <option value="8">الصف الثامن</option>
+            <option value="9">الصف التاسع</option>
+            <option value="10">الصف العاشر</option>
+            <option value="11">الصف الحادي عشر</option>
+            <option value="12">الصف الثاني عشر</option>
+          </select>
+
+          <button type="submit" class="primary-btn" id="registerBtn">
+            إنشاء الحساب
+          </button>
+
+          <p class="auth-switch">
+            لديك حساب بالفعل؟
+            <button type="button" class="text-button" id="showLogin">
+              تسجيل الدخول
+            </button>
+          </p>
+        </form>
+
+        <div id="authMessage" class="message-box hidden" role="alert"></div>
+      </div>
     </section>
   </main>
 
-  <footer>EduSpace © 2026 — Learn, Grow, Achieve ✨</footer>
+  <!-- MAIN APPLICATION -->
+  <div id="appScreen" class="app-screen hidden">
 
-  <script>
-    function changeLanguage() {
-      const en = document.getElementById("language").value === "en";
-      document.documentElement.lang = en ? "en" : "ar";
-      document.documentElement.dir = en ? "ltr" : "rtl";
-      const translations = {
-        welcome: ["مرحباً بك في EduSpace 💜", "Welcome to EduSpace 💜"],
-        intro: ["مساحتك التعليمية التي تجمع الدروس والواجبات والاختبارات والكتب والمذاكرة في مكان واحد.", "Your learning space for lessons, homework, exams, books and studying."],
-        start: ["اكتشف الموقع", "Explore the website"],
-        featuresTitle: ["استكشف EduSpace", "Explore EduSpace"],
-        lessons: ["📚 الدروس", "📚 Lessons"],
-        lessonsText: ["تابع دروسك وملخصاتك التعليمية.", "Explore lessons and study notes."],
-        homework: ["📝 الواجبات", "📝 Homework"],
-        homeworkText: ["تابع واجباتك وتسليماتك.", "Track your homework and submissions."],
-        exams: ["📋 الاختبارات", "📋 Exams"],
-        examsText: ["استعد للاختبارات وتابع نتائجك.", "Take exams and track your results."],
-        library: ["📖 المكتبة", "📖 Library"],
-        libraryText: ["مكان للكتب والملفات التعليمية.", "A place for books and learning files."],
-        timer: ["⏱️ مؤقت المذاكرة", "⏱️ Study Timer"],
-        timerText: ["نظّم وقت مذاكرتك وركز في أهدافك.", "Organize your study time and focus."],
-        rooms: ["👥 غرف المذاكرة", "👥 Study Rooms"],
-        roomsText: ["ذاكر مع زملائك في مساحة مشتركة.", "Study with classmates in shared rooms."],
-        assistant: ["🤖 EduAI", "🤖 EduAI"],
-        assistantText: ["مساعد تعليمي للإجابة عن أسئلتك.", "A learning assistant for your questions."],
-        account: ["👤 الحسابات", "👤 Accounts"],
-        accountText: ["مساحة مخصصة للطلاب والمعلمين والإدارة.", "Spaces for students, teachers and admins."]
-      };
-      for (const id in translations) {
-        document.getElementById(id).textContent = translations[id][en ? 1 : 0];
-      }
-    }
-  </script>
-<script type="module">
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
 
-    import { getFirestore }
-      from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+      <div class="sidebar-brand">
+        <div class="brand-logo small">E</div>
+        <div>
+          <h2>EduSpace</h2>
+          <span>LEARN • GROW • ACHIEVE</span>
+        </div>
+        <button id="closeSidebar" class="icon-btn mobile-only"
+          aria-label="إغلاق القائمة">✕</button>
+      </div>
 
-    import { getAuth }
-      from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebarAvatar">U</div>
+        <div class="user-info">
+          <strong id="sidebarName">User</strong>
+          <span id="sidebarRole">Student</span>
+        </div>
+      </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBf_AY-MDmNLk8HX5ECwHT5OXG8GSLpbbc",
-      authDomain: "eduspace-1008a.firebaseapp.com",
-      projectId: "eduspace-1008a",
-      storageBucket: "eduspace-1008a.firebasestorage.app",
-      messagingSenderId: "396717409799",
-      appId: "1:396717409799:web:b970433310e914c33e4ca2"
-    };
+      <nav class="sidebar-nav" aria-label="القائمة الرئيسية">
 
-    const app = initializeApp(firebaseConfig);
+        <span class="nav-label">WORKSPACE</span>
 
-    window.db = getFirestore(app);
-    window.auth = getAuth(app);
+        <button class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">⌂</span>
+          <span>الرئيسية</span>
+        </button>
 
-    console.log("EduSpace Firebase Connected!");
-  </script>
+        <button class="nav-item" data-page="subjects">
+          <span class="nav-icon">▤</span>
+          <span>المناهج والدروس</span>
+        </button>
+
+        <button class="nav-item" data-page="library">
+          <span class="nav-icon">▣</span>
+          <span>المكتبة المشتركة</span>
+        </button>
+
+        <button class="nav-item" data-page="assignments">
+          <span class="nav-icon">✎</span>
+          <span>الواجبات</span>
+        </button>
+
+        <button class="nav-item" data-page="exams">
+          <span class="nav-icon">▧</span>
+          <span>الاختبارات</span>
+        </button>
+
+        <button class="nav-item" data-page="examCenter">
+          <span class="nav-icon">◎</span>
+          <span>Exam Center</span>
+        </button>
+
+        <span class="nav-label">STUDY TOOLS</span>
+
+        <button class="nav-item" data-page="studyRooms">
+          <span class="nav-icon">◫</span>
+          <span>غرف المذاكرة</span>
+        </button>
+
+        <button class="nav-item" data-page="timer">
+          <span class="nav-icon">◷</span>
+          <span>مؤقت المذاكرة</span>
+        </button>
+
+        <button class="nav-item" data-page="progress">
+          <span class="nav-icon">▥</span>
+          <span>إنجازاتي</span>
+        </button>
+
+        <!-- TEACHER MENU -->
+        <div id="teacherMenu" class="role-menu hidden">
+          <span class="nav-label">TEACHER TOOLS</span>
+          <button class="nav-item" data-page="teacher">
+            <span class="nav-icon">▤</span>
+            <span>لوحة المعلم</span>
+          </button>
+        </div>
+
+        <!-- ADMIN MENU -->
+        <div id="adminMenu" class="role-menu hidden">
+          <span class="nav-label">ADMINISTRATION</span>
+          <button class="nav-item" data-page="admin">
+            <span class="nav-icon">⚙</span>
+            <span>لوحة الأدمن</span>
+          </button>
+          <button class="nav-item" data-page="users">
+            <span class="nav-icon">♙</span>
+            <span>إدارة المستخدمين</span>
+          </button>
+          <button class="nav-item" data-page="content">
+            <span class="nav-icon">▣</span>
+            <span>إدارة المحتوى</span>
+          </button>
+        </div>
+
+        <!-- OWNER MENU -->
+        <div id="ownerMenu" class="role-menu hidden">
+          <span class="nav-label">OWNER CONTROL</span>
+          <button class="nav-item owner-nav" data-page="owner">
+            <span class="nav-icon">♛</span>
+            <span>Owner Dashboard</span>
+          </button>
+          <button class="nav-item owner-nav" data-page="admins">
+            <span class="nav-icon">♜</span>
+            <span>إدارة الأدمن</span>
+          </button>
+          <button class="nav-item owner-nav" data-page="security">
+            <span class="nav-icon">⬡</span>
+            <span>الأمان والصلاحيات</span>
+          </button>
+        </div>
+
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="nav-item" data-page="settings">
+          <span class="nav-icon">⚙</span>
+          <span>الإعدادات</span>
+        </button>
+
+        <button class="nav-item logout-item" id="logoutBtn">
+          <span class="nav-icon">⇥</span>
+          <span>تسجيل الخروج</span>
+        </button>
+      </div>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <header class="topbar">
+        <div class="topbar-left">
+          <button id="openSidebar" class="icon-btn mobile-only"
+            aria-label="فتح القائمة">☰</button>
+          <div>
+            <span class="topbar-caption">YOUR LEARNING SPACE</span>
+            <h2 id="pageTitle">الرئيسية</h2>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <button class="icon-btn" id="languageBtn" title="Change language">
+            EN
+          </button>
+          <div class="topbar-avatar" id="topbarAvatar">U</div>
+        </div>
+      </header>
+
+      <div id="pageContainer" class="page-container">
+
+        <!-- DASHBOARD -->
+        <section class="page-section active" id="page-dashboard">
+          <div class="welcome-banner">
+            <div>
+              <span class="eyebrow">WELCOME BACK</span>
+              <h1>أهلًا، <span id="welcomeName">بك!</span> ✨</h1>
+              <p>جاهز تكمل رحلة التعلم والإنجاز؟</p>
+            </div>
+            <div class="welcome-decoration">E</div>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-card">
+              <span class="stat-icon">▤</span>
+              <span class="stat-label">الدروس</span>
+              <strong id="lessonsCount">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="stat-icon">✎</span>
+              <span class="stat-label">الواجبات</span>
+              <strong id="assignmentsCount">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="stat-icon">▧</span>
+              <span class="stat-label">الاختبارات</span>
+              <strong id="examsCount">0</strong>
+            </article>
+            <article class="stat-card">
+              <span class="stat-icon">★</span>
+              <span class="stat-label">الإنجازات</span>
+              <strong id="achievementsCount">0</strong>
+            </article>
+          </div>
+
+          <div class="content-grid">
+            <section class="content-card">
+              <div class="section-heading">
+                <div>
+                  <h3>آخر التحديثات</h3>
+                  <p>تابع كل جديد في منصتك</p>
+                </div>
+              </div>
+              <div id="recentActivity" class="empty-state">
+                <span>✦</span>
+                <p>لا توجد تحديثات حاليًا.</p>
+              </div>
+            </section>
+
+            <section class="content-card">
+              <div class="section-heading">
+                <div>
+                  <h3>ابدأ التعلم</h3>
+                  <p>اختر وجهتك التالية</p>
+                </div>
+              </div>
+              <div class="quick-actions">
+                <button data-page="subjects">📚 المناهج والدروس</button>
+                <button data-page="library">📖 المكتبة</button>
+                <button data-page="exams">📝 الاختبارات</button>
+                <button data-page="timer">⏱️ مؤقت المذاكرة</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- SUBJECTS -->
+        <section class="page-section" id="page-subjects">
+          <div class="page-intro">
+            <h1>المناهج والدروس 📚</h1>
+            <p>كل موادك التعليمية في مكان واحد.</p>
+          </div>
+          <div id="subjectsContainer" class="cards-grid"></div>
+        </section>
+
+        <!-- LIBRARY -->
+        <section class="page-section" id="page-library">
+          <div class="page-intro">
+            <h1>المكتبة المشتركة 📖</h1>
+            <p>مصادر وكتب يستفيد منها جميع المستخدمين.</p>
+          </div>
+          <div class="toolbar">
+            <input id="librarySearch" type="search" placeholder="ابحث عن كتاب...">
+            <button id="uploadBookBtn" class="primary-btn">+ إضافة كتاب</button>
+            <input id="bookFile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" hidden>
+          </div>
+          <div id="libraryContainer" class="cards-grid"></div>
+        </section>
+
+        <!-- ASSIGNMENTS -->
+        <section class="page-section" id="page-assignments">
+          <div class="page-intro">
+            <h1>الواجبات ✏️</h1>
+            <p>تابع واجباتك ومواعيد تسليمها.</p>
+          </div>
+          <div id="assignmentsContainer" class="cards-grid"></div>
+        </section>
+
+        <!-- EXAMS -->
+        <section class="page-section" id="page-exams">
+          <div class="page-intro">
+            <h1>الاختبارات 📝</h1>
+            <p>اختبر معلوماتك وتابع نتائجك.</p>
+          </div>
+          <div id="examsContainer" class="cards-grid"></div>
+        </section>
+
+        <!-- EXAM CENTER -->
+        <section class="page-section" id="page-examCenter">
+          <div class="page-intro">
+            <h1>Exam Center</h1>
+            <p>مساحتك المخصصة للاختبارات والتدريب.</p>
+          </div>
+          <div id="examCenterContainer" class="cards-grid"></div>
+        </section>
+
+        <!-- STUDY ROOMS -->
+        <section class="page-section" id="page-studyRooms">
+          <div class="page-intro">
+            <h1>غرف المذاكرة 🧠</h1>
+            <p>نظم وقتك وذاكر مع الآخرين.</p>
+          </div>
+          <div id="studyRoomsContainer" class="cards-grid"></div>
+        </section>
+
+        <!-- TIMER -->
+        <section class="page-section" id="page-timer">
+          <div class="page-intro">
+            <h1>مؤقت المذاكرة ⏱️</h1>
+            <p>ركز في دراستك ونظم فترات الراحة.</p>
+          </div>
+          <div class="timer-card">
+            <div id="timerDisplay">25:00</div>
+            <div class="timer-controls">
+              <button id="startTimer" class="primary-btn">ابدأ</button>
+              <button id="pauseTimer" class="secondary-btn">إيقاف مؤقت</button>
+              <button id="resetTimer" class="secondary-btn">إعادة</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROGRESS -->
+        <section class="page-section" id="page-progress">
+          <div class="page-intro">
+            <h1>إنجازاتي ⭐</h1>
+            <p>شاهد تقدمك في رحلتك التعليمية.</p>
+          </div>
+          <div id="progressContainer" class="cards-grid"></div>
+        </section>
+
+        <!-- TEACHER -->
+        <section class="page-section" id="page-teacher">
+          <div class="page-intro">
+            <h1>لوحة المعلم 👨‍🏫</h1>
+            <p>إدارة الدروس والواجبات والاختبارات.</p>
+          </div>
+          <div id="teacherContainer" class="cards-grid"></div>
+        </section>
+
+        <!-- ADMIN -->
+        <section class="page-section" id="page-admin">
+          <div class="page-intro">
+            <h1>لوحة الأدمن 🛡️</h1>
+            <p>إدارة المنصة ومتابعة النشاط.</p>
+          </div>
+          <div id="adminContainer" class="cards-grid"></div>
+        </section>
+
+        <section class="page-section" id="page-users">
+          <div class="page-intro">
+            <h1>إدارة المستخدمين</h1>
+            <p>مراجعة وإدارة حسابات المستخدمين.</p>
+          </div>
+          <div id="usersContainer"></div>
+        </section>
+
+        <section class="page-section" id="page-content">
+          <div class="page-intro">
+            <h1>إدارة المحتوى</h1>
+            <p>إدارة المواد والكتب والمصادر التعليمية.</p>
+          </div>
+          <div id="contentAdminContainer"></div>
+        </section>
+
+        <!-- OWNER -->
+        <section class="page-section" id="page-owner">
+          <div class="page-intro">
+            <span class="eyebrow">ROOT CONTROL</span>
+            <h1>Owner Dashboard ♛</h1>
+            <p>الإدارة الكاملة لمنصة EduSpace.</p>
+          </div>
+          <div id="ownerContainer" class="cards-grid"></div>
+        </section>
+
+        <section class="page-section" id="page-admins">
+          <div class="page-intro">
+            <h1>إدارة الأدمن</h1>
+            <p>إدارة حسابات الأدمن وصلاحياتهم.</p>
+          </div>
+          <div id="adminsContainer"></div>
+        </section>
+
+        <section class="page-section" id="page-security">
+          <div class="page-intro">
+            <h1>الأمان والصلاحيات 🔐</h1>
+            <p>مراجعة إعدادات الحماية والتحكم في الوصول.</p>
+          </div>
+          <div id="securityContainer"></div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="page-section" id="page-settings">
+          <div class="page-intro">
+            <h1>الإعدادات ⚙️</h1>
+            <p>إدارة تفضيلات حسابك.</p>
+          </div>
+          <div class="content-card">
+            <h3>معلومات الحساب</h3>
+            <p id="settingsEmail">البريد الإلكتروني</p>
+            <p id="settingsRole">نوع الحساب</p>
+          </div>
+        </section>
+
+      </div>
+
+      <footer class="app-footer">
+        <span>© 2026 EduSpace</span>
+        <span>Learn • Grow • Achieve</span>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <!-- APPLICATION SCRIPT -->
+  <script type="module" src="script.js"></script>
+
 </body>
 </html>
