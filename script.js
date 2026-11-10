@@ -1,859 +1,410 @@
+// ============================================
+// EduSpace - Complete Main Script
+// No AI - No external packages - No server
+// ============================================
 
-/* ============================================
-   EDUSPACE - MAIN APPLICATION
-   Firebase Authentication + Firestore
-   Email / Google Login
-============================================ */
+// BASIC SETTINGS
 
-import { initializeApp } from
-  "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  sendPasswordResetEmail,
-  updateProfile
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-
-
-/* ============================================
-   1. FIREBASE CONFIGURATION
-============================================ */
-
-// ضعي بيانات مشروع Firebase الحقيقي هنا.
-
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// ضعي Firebase Authentication UID الخاص بحساب
-// Owner بعد إنشاء الحساب والتحقق منه.
-// لا تستخدمي البريد الإلكتروني لتحديد الـ Owner.
-
-const OWNER_UID = "ADD_YOUR_OWNER_UID_HERE";
-
-let app;
-let auth;
-let db;
-let firebaseReady = false;
+let currentLanguage = localStorage.getItem("eduLanguage") || "ar";
 let currentUser = null;
-let currentProfile = null;
-let currentPage = "dashboard";
 
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: "select_account"
-});
+let assignments = JSON.parse(localStorage.getItem("eduAssignments") || "[]");
+let completedAssignments = JSON.parse(localStorage.getItem("eduCompleted") || "[]");
 
+let lessons = JSON.parse(localStorage.getItem("eduLessons") || "null");
 
-/* ============================================
-   2. ELEMENT HELPERS
-============================================ */
+const defaultLessons = [
+  {id:1,icon:"📐",ar:"الرياضيات",en:"Mathematics",descAr:"نظم دروس الرياضيات وتابع مذاكرتك.",descEn:"Organize your math lessons and study.",grade:"all",subject:"math"},
+  {id:2,icon:"🧪",ar:"العلوم",en:"Science",descAr:"اكتشف العلوم بطريقة ممتعة.",descEn:"Explore science in an interesting way.",grade:"all",subject:"science"},
+  {id:3,icon:"📖",ar:"اللغة العربية",en:"Arabic",descAr:"طور مهارات القراءة والكتابة.",descEn:"Improve your reading and writing skills.",grade:"all",subject:"arabic"},
+  {id:4,icon:"🌍",ar:"اللغة الإنجليزية",en:"English",descAr:"طور لغتك الإنجليزية باستمرار.",descEn:"Keep improving your English.",grade:"all",subject:"english"},
+  {id:5,icon:"🕌",ar:"التربية الإسلامية",en:"Islamic Studies",descAr:"تعلم المزيد عن دينك.",descEn:"Learn more about your religion.",grade:"all",subject:"islamic"},
+  {id:6,icon:"💻",ar:"التكنولوجيا",en:"Technology",descAr:"اكتشف عالم التكنولوجيا.",descEn:"Discover the world of technology.",grade:"all",subject:"computer"}
+];
 
-const $ = (id) => document.getElementById(id);
-
-function show(element) {
-  if (element) element.classList.remove("hidden");
+if (!Array.isArray(lessons)) {
+  lessons = defaultLessons;
+  localStorage.setItem("eduLessons", JSON.stringify(lessons));
 }
 
-function hide(element) {
-  if (element) element.classList.add("hidden");
-}
+if (!Array.isArray(assignments)) assignments = [];
+if (!Array.isArray(completedAssignments)) completedAssignments = [];
 
-function showMessage(message, type = "error") {
-  const box = $("authMessage");
-  if (!box) return;
-
-  box.textContent = message;
-  box.className = "message-box";
-  box.style.color = type === "success" ? "#42d6a4" : "#ff647c";
-  box.style.background = type === "success"
-    ? "rgba(66,214,164,.1)"
-    : "rgba(255,100,124,.1)";
-
-  show(box);
-}
-
-function showToast(message, type = "") {
-  const container = $("toastContainer");
-  if (!container) return;
-
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-
-  container.appendChild(toast);
-
-  setTimeout(() => toast.remove(), 3500);
-}
-
-function setLoading(button, loading, normalText) {
-  if (!button) return;
-
-  button.disabled = loading;
-  button.textContent = loading ? "جاري التحميل..." : normalText;
-}
-
-function friendlyError(error) {
-  const messages = {
-    "auth/invalid-email": "البريد الإلكتروني غير صحيح.",
-    "auth/user-not-found": "لا يوجد حساب بهذا البريد.",
-    "auth/wrong-password": "كلمة المرور غير صحيحة.",
-    "auth/invalid-credential": "بيانات تسجيل الدخول غير صحيحة.",
-    "auth/email-already-in-use": "هذا البريد مسجل بالفعل.",
-    "auth/weak-password": "كلمة المرور ضعيفة.",
-    "auth/popup-closed-by-user": "تم إغلاق نافذة Google.",
-    "auth/popup-blocked": "المتصفح منع نافذة Google. اسمحي بالنوافذ المنبثقة.",
-    "auth/unauthorized-domain": "هذا الدومين غير مضاف في Firebase.",
-    "auth/network-request-failed": "تحققي من اتصال الإنترنت.",
-    "auth/too-many-requests": "محاولات كثيرة. حاولي لاحقًا.",
-    "auth/operation-not-allowed": "طريقة تسجيل الدخول غير مفعّلة في Firebase."
-  };
-
-  return messages[error.code] ||
-    "حدث خطأ. حاولي مرة أخرى.";
-}
-
-
-/* ============================================
-   3. INITIALIZE FIREBASE
-============================================ */
-
-function initializeFirebase() {
-  try {
-    if (
-      !firebaseConfig.apiKey ||
-      firebaseConfig.apiKey === "YOUR_API_KEY" ||
-      !firebaseConfig.projectId ||
-      firebaseConfig.projectId === "YOUR_PROJECT_ID"
-    ) {
-      throw new Error("Firebase configuration is missing.");
-    }
-
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-
-    firebaseReady = true;
-
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-
-      if (!user) {
-        currentProfile = null;
-        showAuthentication();
-        return;
-      }
-
-      try {
-        await loadUserProfile(user);
-        showApplication();
-      } catch (error) {
-        console.error("Profile loading failed:", error);
-        showAuthentication();
-        showToast("تعذر تحميل بيانات الحساب.", "error");
-      }
-    });
-
-  } catch (error) {
-    console.error("Firebase initialization:", error);
-
-    hide($("loadingScreen"));
-    show($("authScreen"));
-    hide($("appScreen"));
-
-    showMessage(
-      "يجب إعداد Firebase أولًا حتى يعمل تسجيل الدخول الحقيقي."
-    );
-
-    addGoogleButton();
-  }
-}
-
-
-/* ============================================
-   4. GOOGLE LOGIN BUTTON
-============================================ */
-
-function addGoogleButton() {
-  const form = $("loginForm");
-  const loginBtn = $("loginBtn");
-
-  if (!form || !loginBtn || $("googleLoginBtn")) return;
-
-  const divider = document.createElement("div");
-  divider.className = "auth-divider";
-  divider.textContent = "أو";
-
-  const button = document.createElement("button");
-  button.type = "button";
-  button.id = "googleLoginBtn";
-  button.className = "google-login-btn";
-  button.innerHTML = `
-    <span class="google-icon">G</span>
-    <span>المتابعة باستخدام Google</span>
-  `;
-
-  loginBtn.insertAdjacentElement("afterend", divider);
-  divider.insertAdjacentElement("afterend", button);
-
-  button.addEventListener("click", googleLogin);
-
-  const style = document.createElement("style");
-  style.textContent = `
-    .auth-divider {
-      display:flex;
-      align-items:center;
-      gap:12px;
-      color:#a0a5bd;
-      font-size:12px;
-      margin:20px 0;
-    }
-    .auth-divider:before,
-    .auth-divider:after {
-      content:"";
-      height:1px;
-      flex:1;
-      background:rgba(255,255,255,.1);
-    }
-    .google-login-btn {
-      width:100%;
-      min-height:47px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:12px;
-      border-radius:10px;
-      background:#fff;
-      color:#252525;
-      font-weight:700;
-      font-size:13px;
-      border:1px solid #ddd;
-      transition:.2s;
-    }
-    .google-login-btn:hover {
-      background:#eee;
-    }
-    .google-icon {
-      font-family:Arial,sans-serif;
-      font-size:20px;
-      font-weight:800;
-      color:#4285f4;
-    }
-    .google-login-btn:disabled {
-      opacity:.6;
-    }
-  `;
-
-  document.head.appendChild(style);
-}
-
-
-/* ============================================
-   5. AUTHENTICATION SCREEN
-============================================ */
-
-function showAuthentication() {
-  hide($("loadingScreen"));
-  show($("authScreen"));
-  hide($("appScreen"));
-
-  switchAuthMode("login");
-}
-
-function switchAuthMode(mode) {
-  const isLogin = mode === "login";
-
-  $("authTitle").textContent = isLogin
-    ? "أهلًا بعودتك!"
-    : "إنشاء حساب جديد";
-
-  $("authSubtitle").textContent = isLogin
-    ? "سجّل دخولك للوصول إلى مساحتك التعليمية."
-    : "انضم إلى مجتمع EduSpace التعليمي.";
-
-  if (isLogin) {
-    show($("loginForm"));
-    hide($("registerForm"));
-  } else {
-    hide($("loginForm"));
-    show($("registerForm"));
-  }
-
-  hide($("authMessage"));
-}
-
-
-/* ============================================
-   6. EMAIL LOGIN
-============================================ */
-
-async function emailLogin(event) {
-  event.preventDefault();
-
-  if (!firebaseReady) {
-    showMessage("إعداد Firebase غير مكتمل.");
-    return;
-  }
-
-  const email = $("loginEmail").value.trim();
-  const password = $("loginPassword").value;
-  const button = $("loginBtn");
-
-  setLoading(button, true, "تسجيل الدخول");
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    showToast("تم تسجيل الدخول بنجاح.", "success");
-  } catch (error) {
-    showMessage(friendlyError(error));
-  } finally {
-    setLoading(button, false, "تسجيل الدخول");
-  }
-}
-
-
-/* ============================================
-   7. GOOGLE LOGIN
-============================================ */
-
-async function googleLogin() {
-  if (!firebaseReady) {
-    showMessage("إعداد Firebase غير مكتمل.");
-    return;
-  }
-
-  const button = $("googleLoginBtn");
-  if (button) button.disabled = true;
-
-  try {
-    await signInWithPopup(auth, googleProvider);
-    showToast("تم تسجيل الدخول باستخدام Google.", "success");
-  } catch (error) {
-    showMessage(friendlyError(error));
-  } finally {
-    if (button) button.disabled = false;
-  }
-}
-
-
-/* ============================================
-   8. CREATE ACCOUNT
-============================================ */
-
-async function registerAccount(event) {
-  event.preventDefault();
-
-  if (!firebaseReady) {
-    showMessage("إعداد Firebase غير مكتمل.");
-    return;
-  }
-
-  const name = $("registerName").value.trim();
-  const email = $("registerEmail").value.trim();
-  const password = $("registerPassword").value;
-  const confirm = $("registerConfirm").value;
-  const grade = $("registerGrade").value;
-
-  if (name.length < 2) {
-    showMessage("اكتبي اسمًا صحيحًا.");
-    return;
-  }
-
-  if (password !== confirm) {
-    showMessage("كلمتا المرور غير متطابقتين.");
-    return;
-  }
-
-  if (!grade) {
-    showMessage("اختاري الصف الدراسي.");
-    return;
-  }
-
-  const button = $("registerBtn");
-  setLoading(button, true, "إنشاء الحساب");
-
-  try {
-    const result = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    await updateProfile(result.user, {
-      displayName: name
-    });
-
-    await setDoc(doc(db, "users", result.user.uid), {
-      uid: result.user.uid,
-      name,
-      email,
-      grade,
-      role: "student",
-      createdAt: serverTimestamp(),
-      provider: "email"
-    });
-
-    showToast("تم إنشاء حسابك بنجاح!", "success");
-
-  } catch (error) {
-    showMessage(friendlyError(error));
-  } finally {
-    setLoading(button, false, "إنشاء الحساب");
-  }
-}
-
-
-/* ============================================
-   9. LOAD USER PROFILE AND ROLE
-============================================ */
-
-async function loadUserProfile(user) {
-  const userRef = doc(db, "users", user.uid);
-  const snapshot = await getDoc(userRef);
-
-  if (snapshot.exists()) {
-    currentProfile = snapshot.data();
-  } else {
-    const profile = {
-      uid: user.uid,
-      name: user.displayName || "Student",
-      email: user.email || "",
-      grade: "",
-      role: "student",
-      provider: user.providerData[0]?.providerId || "unknown",
-      createdAt: serverTimestamp()
-    };
-
-    await setDoc(userRef, profile);
-    currentProfile = profile;
-  }
-
-  // Owner is assigned only through a preconfigured UID.
-  if (
-    OWNER_UID !== "ADD_YOUR_OWNER_UID_HERE" &&
-    user.uid === OWNER_UID
-  ) {
-    currentProfile.role = "owner";
-  }
-
-  // Never accept a role from registration form input.
-  // Admin roles must be assigned by trusted administration.
-}
-
-
-/* ============================================
-   10. SHOW APPLICATION
-============================================ */
-
-function showApplication() {
-  hide($("loadingScreen"));
-  hide($("authScreen"));
-  show($("appScreen"));
-
-  const profile = currentProfile || {};
-  const name = profile.name || currentUser.displayName || "User";
-  const role = profile.role || "student";
-
-  $("sidebarName").textContent = name;
-  $("sidebarRole").textContent = role.toUpperCase();
-  $("welcomeName").textContent = name;
-
-  $("sidebarAvatar").textContent = name.charAt(0).toUpperCase();
-  $("topbarAvatar").textContent = name.charAt(0).toUpperCase();
-
-  $("settingsEmail").textContent = currentUser.email || "";
-  $("settingsRole").textContent = role;
-
-  hide($("teacherMenu"));
-  hide($("adminMenu"));
-  hide($("ownerMenu"));
-
-  if (role === "teacher" || role === "admin" || role === "owner") {
-    show($("teacherMenu"));
-  }
-
-  if (role === "admin" || role === "owner") {
-    show($("adminMenu"));
-  }
-
-  if (role === "owner") {
-    show($("ownerMenu"));
-  }
-
-  navigateTo("dashboard");
-  loadDashboard();
-}
-
-
-/* ============================================
-   11. ROLE PERMISSIONS FOR UI
-============================================ */
-
-const pagePermissions = {
-  dashboard: ["student", "teacher", "admin", "owner"],
-  subjects: ["student", "teacher", "admin", "owner"],
-  library: ["student", "teacher", "admin", "owner"],
-  assignments: ["student", "teacher", "admin", "owner"],
-  exams: ["student", "teacher", "admin", "owner"],
-  examCenter: ["student", "teacher", "admin", "owner"],
-  studyRooms: ["student", "teacher", "admin", "owner"],
-  timer: ["student", "teacher", "admin", "owner"],
-  progress: ["student", "teacher", "admin", "owner"],
-  teacher: ["teacher", "admin", "owner"],
-  admin: ["admin", "owner"],
-  users: ["admin", "owner"],
-  content: ["admin", "owner"],
-  owner: ["owner"],
-  admins: ["owner"],
-  security: ["owner"],
-  settings: ["student", "teacher", "admin", "owner"]
-};
-
-const pageTitles = {
-  dashboard: "الرئيسية",
-  subjects: "المناهج والدروس",
-  library: "المكتبة المشتركة",
-  assignments: "الواجبات",
-  exams: "الاختبارات",
-  examCenter: "Exam Center",
-  studyRooms: "غرف المذاكرة",
-  timer: "مؤقت المذاكرة",
-  progress: "إنجازاتي",
-  teacher: "لوحة المعلم",
-  admin: "لوحة الأدمن",
-  users: "إدارة المستخدمين",
-  content: "إدارة المحتوى",
-  owner: "Owner Dashboard",
-  admins: "إدارة الأدمن",
-  security: "الأمان والصلاحيات",
-  settings: "الإعدادات"
-};
-
-
-/* ============================================
-   12. NAVIGATION
-============================================ */
-
-function navigateTo(page) {
-  if (!pagePermissions[page]) return;
-
-  const role = currentProfile?.role || "student";
-
-  if (!pagePermissions[page].includes(role)) {
-    showToast("ليس لديك صلاحية للوصول إلى هذه الصفحة.", "error");
-    return;
-  }
-
-  currentPage = page;
-
-  document.querySelectorAll(".page-section").forEach(section => {
-    section.classList.remove("active");
-  });
-
-  const target = $("page-" + page);
-  if (target) target.classList.add("active");
-
-  document.querySelectorAll(".nav-item[data-page]").forEach(button => {
-    button.classList.toggle("active", button.dataset.page === page);
-  });
-
-  $("pageTitle").textContent = pageTitles[page] || page;
-
-  closeSidebar();
-}
-
-
-/* ============================================
-   13. DASHBOARD DATA
-============================================ */
-
-async function loadDashboard() {
-  if (!db || !currentUser) return;
-
-  try {
-    const [lessons, assignments, exams] = await Promise.all([
-      getDocs(collection(db, "lessons")),
-      getDocs(collection(db, "assignments")),
-      getDocs(collection(db, "exams"))
-    ]);
-
-    $("lessonsCount").textContent = lessons.size;
-    $("assignmentsCount").textContent = assignments.size;
-    $("examsCount").textContent = exams.size;
-
-  } catch (error) {
-    console.error("Dashboard:", error);
-  }
-}
-
-
-/* ============================================
-   14. LIBRARY
-============================================ */
-
-async function loadLibrary() {
-  if (!db) return;
-
-  const container = $("libraryContainer");
-  container.innerHTML = "";
-
-  try {
-    const snapshot = await getDocs(collection(db, "books"));
-
-    if (snapshot.empty) {
-      container.textContent = "المكتبة فارغة حاليًا.";
-      return;
-    }
-
-    snapshot.forEach(item => {
-      const book = item.data();
-      const card = document.createElement("article");
-      card.className = "content-card";
-
-      const title = document.createElement("h3");
-      title.textContent = book.title || "كتاب";
-
-      const description = document.createElement("p");
-      description.textContent = book.description || "مصدر تعليمي";
-
-      card.append(title, description);
-
-      if (book.url) {
-        const link = document.createElement("a");
-        link.href = book.url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "فتح الكتاب";
-        card.appendChild(link);
-      }
-
-      container.appendChild(card);
-    });
-
-  } catch (error) {
-    console.error("Library:", error);
-    container.textContent = "تعذر تحميل المكتبة.";
-  }
-}
-
-
-/* ============================================
-   15. PASSWORD RESET
-============================================ */
-
-async function resetPassword() {
-  if (!firebaseReady) {
-    showMessage("إعداد Firebase غير مكتمل.");
-    return;
-  }
-
-  const email = $("loginEmail").value.trim();
-
-  if (!email) {
-    showMessage("اكتبي بريدك الإلكتروني أولًا.");
-    $("loginEmail").focus();
-    return;
-  }
-
-  try {
-    await sendPasswordResetEmail(auth, email);
-    showMessage("تم إرسال رابط استعادة كلمة المرور إلى بريدك.", "success");
-  } catch (error) {
-    showMessage(friendlyError(error));
-  }
-}
-
-
-/* ============================================
-   16. LOGOUT
-============================================ */
-
-async function logout() {
-  if (!auth) return;
-
-  try {
-    await signOut(auth);
-    showToast("تم تسجيل الخروج.", "success");
-  } catch (error) {
-    showToast(friendlyError(error), "error");
-  }
-}
-
-
-/* ============================================
-   17. SIDEBAR
-============================================ */
-
-function openSidebar() {
-  $("sidebar").classList.add("open");
-  $("sidebarOverlay").classList.add("active");
-}
-
-function closeSidebar() {
-  $("sidebar").classList.remove("open");
-  $("sidebarOverlay").classList.remove("active");
-}
-
-
-/* ============================================
-   18. STUDY TIMER
-============================================ */
-
-let timerSeconds = 25 * 60;
-let timerInterval = null;
-
-function updateTimer() {
-  const minutes = Math.floor(timerSeconds / 60);
-  const seconds = timerSeconds % 60;
-
-  $("timerDisplay").textContent =
-    String(minutes).padStart(2, "0") + ":" +
-    String(seconds).padStart(2, "0");
-}
-
-function startTimer() {
-  if (timerInterval) return;
-
-  timerInterval = setInterval(() => {
-    if (timerSeconds <= 0) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-      showToast("انتهت جلسة المذاكرة! خدي استراحة.", "success");
-      return;
-    }
-
-    timerSeconds--;
-    updateTimer();
-  }, 1000);
-}
-
-function pauseTimer() {
-  clearInterval(timerInterval);
-  timerInterval = null;
-}
-
-function resetTimer() {
-  pauseTimer();
-  timerSeconds = 25 * 60;
-  updateTimer();
-}
-
-
-/* ============================================
-   19. LANGUAGE SWITCH
-============================================ */
-
-let currentLanguage = "ar";
+// LANGUAGE
 
 function toggleLanguage() {
   currentLanguage = currentLanguage === "ar" ? "en" : "ar";
+  localStorage.setItem("eduLanguage", currentLanguage);
+  applyLanguage();
+  renderAll();
+}
 
+function applyLanguage() {
+  const isEnglish = currentLanguage === "en";
   document.documentElement.lang = currentLanguage;
-  document.documentElement.dir =
-    currentLanguage === "ar" ? "rtl" : "ltr";
+  document.documentElement.dir = isEnglish ? "ltr" : "rtl";
+  document.body.classList.toggle("english", isEnglish);
 
-  $("languageBtn").textContent =
-    currentLanguage === "ar" ? "EN" : "AR";
+  document.getElementById("languageBtn").textContent = isEnglish ? "AR" : "EN";
 
-  showToast(
-    currentLanguage === "ar"
-      ? "تم تغيير الاتجاه إلى العربية."
-      : "Language direction changed to English.",
-    "success"
-  );
+  document.querySelectorAll("[data-ar]").forEach(element => {
+    const value = isEnglish ? element.dataset.en : element.dataset.ar;
+    if (value !== undefined) element.innerHTML = value;
+  });
+
+  document.getElementById("userName").placeholder =
+    isEnglish ? "Enter your name" : "اكتب اسمك";
+
+  document.getElementById("password").placeholder =
+    isEnglish ? "Enter your password" : "أدخل كلمة المرور";
 }
 
+// LOGIN
 
-/* ============================================
-   20. EVENT LISTENERS
-============================================ */
+document.getElementById("loginForm").addEventListener("submit", function(event) {
+  event.preventDefault();
 
-function setupEvents() {
-  $("loginForm").addEventListener("submit", emailLogin);
-  $("registerForm").addEventListener("submit", registerAccount);
+  const name = document.getElementById("userName").value.trim();
+  const password = document.getElementById("password").value;
 
-  $("showRegister").addEventListener("click", () => {
-    switchAuthMode("register");
+  const role = document.querySelector('input[name="role"]:checked').value;
+
+  if (!name || password.length < 3) {
+    showToast(currentLanguage === "ar"
+      ? "اكتبي الاسم وكلمة مرور من 3 أحرف على الأقل"
+      : "Enter your name and a password of at least 3 characters");
+    return;
+  }
+
+  currentUser = {name: name, role: role};
+
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
+  document.getElementById("logoutBtn").classList.remove("hidden");
+  document.getElementById("displayName").textContent = name;
+
+  document.getElementById("welcomeDescription").textContent =
+    role === "teacher"
+      ? (currentLanguage === "ar"
+        ? "أهلاً بك! ابدأ بإدارة دروسك وواجبات طلابك."
+        : "Welcome! Manage your lessons and student assignments.")
+      : (currentLanguage === "ar"
+        ? "جاهز تحقق إنجاز جديد النهارده؟"
+        : "Ready to achieve something new today?");
+
+  document.querySelectorAll(".teacher-only").forEach(element => {
+    element.classList.toggle("hidden", role !== "teacher");
   });
 
-  $("showLogin").addEventListener("click", () => {
-    switchAuthMode("login");
+  switchTab("home");
+  renderAll();
+  window.scrollTo({top:0,behavior:"smooth"});
+});
+
+// LOGOUT
+
+function logout() {
+  currentUser = null;
+  pauseTimer();
+
+  document.getElementById("loginPage").classList.remove("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("logoutBtn").classList.add("hidden");
+  document.getElementById("loginForm").reset();
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function showHome() {
+  if (!currentUser) {
+    window.scrollTo({top:0,behavior:"smooth"});
+  } else {
+    switchTab("home");
+  }
+}
+
+// NAVIGATION
+
+function switchTab(tab) {
+  const tabs = ["home","lessons","assignments","exams","manage","library","study"];
+
+  tabs.forEach(name => {
+    document.getElementById(name + "Tab").classList.add("hidden");
   });
 
-  $("forgotPassword").addEventListener("click", resetPassword);
-  $("logoutBtn").addEventListener("click", logout);
+  const selectedTab = document.getElementById(tab + "Tab");
+  if (!selectedTab) return;
 
-  $("openSidebar").addEventListener("click", openSidebar);
-  $("closeSidebar").addEventListener("click", closeSidebar);
-  $("sidebarOverlay").addEventListener("click", closeSidebar);
+  selectedTab.classList.remove("hidden");
 
-  $("startTimer").addEventListener("click", startTimer);
-  $("pauseTimer").addEventListener("click", pauseTimer);
-  $("resetTimer").addEventListener("click", resetTimer);
-
-  $("languageBtn").addEventListener("click", toggleLanguage);
-
-  document.querySelectorAll("[data-page]").forEach(button => {
-    button.addEventListener("click", () => {
-      navigateTo(button.dataset.page);
-
-      if (button.dataset.page === "library") {
-        loadLibrary();
-      }
-    });
+  document.querySelectorAll(".nav-tab").forEach(button => {
+    button.classList.toggle("active",button.dataset.tab === tab);
   });
 
-  document.querySelectorAll("[data-toggle-password]").forEach(button => {
-    button.addEventListener("click", () => {
-      const field = $(button.dataset.togglePassword);
+  renderAll();
+}
 
-      if (!field) return;
+// CURRICULUM FILTERS
 
-      field.type = field.type === "password" ? "text" : "password";
-      button.textContent = field.type === "password" ? "إظهار" : "إخفاء";
-    });
+const gradeSelect = document.getElementById("gradeSelect");
+const subjectSelect = document.getElementById("subjectSelect");
+const curriculumSearch = document.getElementById("curriculumSearch");
+
+gradeSelect.addEventListener("change",renderAll);
+subjectSelect.addEventListener("change",renderAll);
+curriculumSearch.addEventListener("input",renderAll);
+
+function getSelectedGrade() {
+  return gradeSelect.value;
+}
+
+function getSelectedSubject() {
+  return subjectSelect.value;
+}
+
+function getSearchText() {
+  return curriculumSearch.value.trim().toLowerCase();
+}
+
+function getSubjectName(subject) {
+  const names = {
+    math:["الرياضيات","Mathematics"],
+    science:["العلوم","Science"],
+    arabic:["اللغة العربية","Arabic"],
+    english:["اللغة الإنجليزية","English"],
+    islamic:["التربية الإسلامية","Islamic Studies"],
+    social:["الدراسات الاجتماعية","Social Studies"],
+    computer:["التكنولوجيا","Technology"]
+  };
+
+  return names[subject]
+    ? names[subject][currentLanguage === "ar" ? 0 : 1]
+    : subject;
+}
+
+function getGradeName(grade) {
+  const number = Number(grade);
+
+  if (currentLanguage === "en") {
+    const names = ["First","Second","Third","Fourth","Fifth","Sixth","Seventh","Eighth","Ninth","Tenth","Eleventh","Twelfth"];
+    return names[number - 1] || grade;
+  }
+
+  const names = ["الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","العاشر","الحادي عشر","الثاني عشر"];
+  return names[number - 1] || grade;
+}
+
+// LESSONS
+
+function renderLessons() {
+  const container = document.getElementById("lessonsGrid");
+  container.innerHTML = "";
+
+  const grade = getSelectedGrade();
+  const subject = getSelectedSubject();
+  const search = getSearchText();
+
+  const filtered = lessons.filter(lesson => {
+    const matchesGrade = lesson.grade === "all" || lesson.grade === grade;
+    const matchesSubject = subject === "all" || lesson.subject === subject;
+
+    const title = currentLanguage === "ar" ? lesson.ar : lesson.en;
+    const description = currentLanguage === "ar" ? lesson.descAr : lesson.descEn;
+
+    const matchesSearch = !search ||
+      title.toLowerCase().includes(search) ||
+      description.toLowerCase().includes(search);
+
+    return matchesGrade && matchesSubject && matchesSearch;
   });
 
-  $("librarySearch").addEventListener("input", () => {
-    const term = $("librarySearch").value.trim().toLowerCase();
+  if (!filtered.length) {
+    container.innerHTML = emptyMessage();
+    return;
+  }
 
-    document.querySelectorAll("#libraryContainer article").forEach(card => {
-      card.style.display = card.textContent.toLowerCase().includes(term)
-        ? ""
-        : "none";
-    });
+  filtered.forEach(lesson => {
+    const card = document.createElement("div");
+    card.className = "lesson-card";
+
+    const icon = document.createElement("div");
+    icon.className = "lesson-icon";
+    icon.textContent = lesson.icon || "📘";
+
+    const heading = document.createElement("h3");
+    heading.textContent = currentLanguage === "ar" ? lesson.ar : lesson.en;
+
+    const paragraph = document.createElement("p");
+    paragraph.textContent = currentLanguage === "ar" ? lesson.descAr : lesson.descEn;
+
+    const gradeText = document.createElement("p");
+    gradeText.textContent = lesson.grade === "all"
+      ? (currentLanguage === "ar" ? "مادة عامة" : "General subject")
+      : (currentLanguage === "ar" ? "الصف " : "Grade ") + getGradeName(lesson.grade);
+
+    card.append(icon,heading,paragraph,gradeText);
+
+    if (currentUser && currentUser.role === "teacher") {
+      const button = document.createElement("button");
+      button.className = "delete-btn";
+      button.textContent = currentLanguage === "ar" ? "حذف الدرس" : "Delete Lesson";
+      button.onclick = () => deleteLesson(lesson.id);
+      card.appendChild(button);
+    }
+
+    container.appendChild(card);
   });
 }
 
+// ADD LESSON
 
-/* ============================================
-   21. START APPLICATION
-============================================ */
+document.getElementById("lessonForm").addEventListener("submit",function(event) {
+  event.preventDefault();
+  if (!currentUser || currentUser.role !== "teacher") return;
 
-setupEvents();
-addGoogleButton();
-updateTimer();
-initializeFirebase();
+  const title = document.getElementById("lessonTitle").value.trim();
+  const description = document.getElementById("lessonDescription").value.trim();
+  const grade = document.getElementById("lessonGrade").value;
+  const subject = document.getElementById("lessonSubject").value;
+
+  if (!title || !description || !grade) {
+    showToast("أكملي بيانات الدرس");
+    return;
+  }
+
+  lessons.push({
+    id:Date.now(),icon:"📘",ar:title,en:title,
+    descAr:description,descEn:description,grade:grade,subject:subject
+  });
+
+  saveData();
+  this.reset();
+  renderAll();
+  showToast("تمت إضافة الدرس بنجاح 📚");
+});
+
+function addLesson() {
+  switchTab("manage");
+  document.getElementById("lessonTitle").focus();
+}
+
+function deleteLesson(id) {
+  if (!currentUser || currentUser.role !== "teacher") return;
+  if (!confirm("هل تريد حذف هذا الدرس؟")) return;
+
+  lessons = lessons.filter(lesson => lesson.id !== id);
+  saveData();
+  renderAll();
+  showToast("تم حذف الدرس");
+}
+
+// ASSIGNMENTS
+
+document.getElementById("assignmentForm").addEventListener("submit",function(event) {
+  event.preventDefault();
+  if (!currentUser || currentUser.role !== "teacher") return;
+
+  const title = document.getElementById("assignmentTitle").value.trim();
+  const description = document.getElementById("assignmentDescription").value.trim();
+  const date = document.getElementById("assignmentDate").value;
+  const grade = document.getElementById("assignmentGrade").value;
+  const subject = document.getElementById("assignmentSubject").value;
+
+  if (!title || !description || !date) {
+    showToast("أكملي جميع البيانات");
+    return;
+  }
+
+  assignments.push({
+    id:Date.now(),title,description,date,grade,subject,author:currentUser.name
+  });
+
+  saveData();
+  this.reset();
+  renderAll();
+  showToast("تم نشر الواجب بنجاح 🎉");
+});
+
+function renderAssignments() {
+  const container = document.getElementById("assignmentsList");
+  container.innerHTML = "";
+
+  const grade = getSelectedGrade();
+  const subject = getSelectedSubject();
+  const search = getSearchText();
+
+  const filtered = assignments.filter(assignment => {
+    const matchesGrade = !assignment.grade || assignment.grade === grade;
+    const matchesSubject = subject === "all" || !assignment.subject || assignment.subject === subject;
+    const matchesSearch = !search ||
+      assignment.title.toLowerCase().includes(search) ||
+      assignment.description.toLowerCase().includes(search);
+
+    return currentUser && currentUser.role === "teacher"
+      ? true
+      : matchesGrade && matchesSubject && matchesSearch;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = emptyMessage();
+    return;
+  }
+
+  filtered.forEach(assignment => {
+    const done = completedAssignments.includes(assignment.id);
+    const card = document.createElement("div");
+    card.className = "assignment-card";
+
+    const details = document.createElement("div");
+    const title = document.createElement("h3");
+    title.textContent = assignment.title;
+
+    const description = document.createElement("p");
+    description.textContent = assignment.description;
+
+    const date = document.createElement("small");
+    date.textContent = (currentLanguage === "ar" ? "موعد التسليم: " : "Due date: ") + assignment.date;
+
+    const subjectInfo = document.createElement("small");
+    subjectInfo.textContent = getSubjectName(assignment.subject || "math") +
+      (assignment.grade ? " • " + (currentLanguage === "ar" ? "الصف " : "Grade ") + getGradeName(assignment.grade) : "");
+
+    details.append(title,description,date,subjectInfo);
+
+    const action = document.createElement("div");
+    const status = document.createElement("span");
+    status.className = "status" + (done ? " done" : "");
+
+    status.textContent = done
+      ? (currentLanguage === "ar" ? "تم الإنجاز ✓" : "Completed ✓")
+      : (currentLanguage === "ar" ? "قيد التنفيذ" : "Pending");
+
+    action.appendChild(status);
+
+    if (currentUser.role === "student") {
+      const button = document.createElement("button");
+      button.className = "secondary-btn";
+      button.style.marginTop = "10px";
+      button.textContent = done
+        ? (currentLanguage === "ar" ? "إلغاء الإنجاز" : "Undo")
+        : (currentLanguage === "ar" ? "تحديد كمكتمل" : "Mark Complete");
+      button.onclick = () => toggleCompletion(assignment.id);
+      action.appendChild(button);
+    }
+
+    card.append(details,action);
+    container.appendChild(card);
+  });
+}
+
+function toggleCompletion(id) {
+  if (completedAssignments.includes(id)) {
+    completedAssignments = completedAssignments.filter(item => item !== id);
+  } else {
+    completedAssignments.push(id);
+  }
+
+  saveData();
+  renderAll();
+  showToast("تم تحديث تقدمك الدراسي");
+}
