@@ -1,4 +1,3 @@
-
 /* =========================================
    EDUSPACE - COMPLETE DESIGN SYSTEM
    Dark Purple Educational Platform
@@ -932,3 +931,153 @@ select:focus-visible {
   color: white;
 }
 
+
+/* =========================================
+   EDUSPACE - VISUAL FIXES & POLISH
+   Keeps the existing HTML and JavaScript intact
+========================================= */
+
+:root {
+  color-scheme: dark;
+  --surface-glass: rgba(23, 27, 48, .88);
+  --focus-ring: 0 0 0 3px rgba(146, 116, 255, .18);
+}
+
+html {
+  min-width: 320px;
+  background: var(--bg);
+}
+
+body {
+  direction: rtl;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color .2s ease;
+}
+
+a:hover {
+  color: #bcaaff;
+}
+
+img, video, canvas, svg {
+  max-width: 100%;
+}
+
+input, textarea, select {
+  max-width: 100%;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  accent-color: var(--primary);
+}
+
+textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px 14px;
+  font: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+button {
+  font: inherit;
+  transition: background-color .2s ease, border-color .2s ease,
+              color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+button:focus-visible, a:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+::placeholder {
+  color: #777e9a;
+  opacity: 1;
+}
+
+.content-card, .timer-card, .stat-card, .auth-card,
+.welcome-banner, .sidebar-user, .toast {
+  isolation: isolate;
+}
+
+.page-section, .page-container, .main-content {
+  min-width: 0;
+}
+
+.cards-grid > *, .content-grid > *, .stats-grid > * {
+  min-width: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text);
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .auth-screen {
+    min-height: 100svh;
+  }
+
+  .auth-container {
+    width: 100%;
+  }
+
+  .topbar, .page-container {
+    min-width: 0;
+  }
+
+  .welcome-banner {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card {
+    max-width: 100%;
+  }
+
+  .welcome-decoration {
+    display: none;
+  }
+
+  .app-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
